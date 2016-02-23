@@ -75,8 +75,8 @@ Bayes_full <- function(Y,X,ID,data,...){
                   "beta0_randomEffects",
                   "Beta_randomEffects","Sigma_error",
                   "Sigma_randomEffects"),
-                  model.file ="mlRegression.txt", ...)
-  
+                  model.file =JAGSModel_Bayes_full, ...)
+
   Results <- list(output = samples)
   
   ### Fixed effects:
@@ -95,11 +95,9 @@ Bayes_full <- function(Y,X,ID,data,...){
                                       colMeans
                                   })
   
-  Results$Sigma_error <-  lapply(1:jagsData$nP,
-                                 function(i){
-                                   samples$BUGSoutput$sims.list$Sigma_error[,,,i] %>% 
-                                     apply(2:3, mean)
-                                 })
+  Results$Sigma_error <-  samples$BUGSoutput$sims.list$Sigma_error %>% 
+    apply(2:3, mean)
+  
   Results$Sigma_randomEffects <-  samples$BUGSoutput$sims.list$Sigma_randomEffects %>% 
     apply(2:3, mean)
   
