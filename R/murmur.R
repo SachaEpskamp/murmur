@@ -109,7 +109,7 @@ murmur <- function(
         mutate_(.dots = setNames(list(as.formula(paste0("~ c(rep(NA,Lag),",preds[i],"[1:(n()-Lag)])"))), X[i]))
     }
     Xtemp <- Xtemp %>% select_(.dots = c(X,ID,time))
-    data <- data %>% left_join(Xtemp, c(ID,time))
+    data <- data %>% select_(.dots = c(Y,ID,time)) %>% left_join(Xtemp, c(ID,time))
   }
 
   ### Standardization ###
