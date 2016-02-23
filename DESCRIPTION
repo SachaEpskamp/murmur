@@ -1,0 +1,12 @@
+Package: murmur
+Type: Package
+Title: MUltivaRiate MUlti-level Regression
+Version: 0.1.0
+Date: 2015-05-31
+Depends: R (>= 3.0.0)
+Imports: lme4, qgraph, dplyr, mvtnorm, R2jags, clusterGeneration
+Author: Sacha Epskamp, Marie Deserno & Noémi Schuurman
+Maintainer: Sacha Epskamp <mail@sachaepskamp.com>
+Description: Implements several methods for performing multi-level multivariate 
+              regression models.
+License: GPL-2

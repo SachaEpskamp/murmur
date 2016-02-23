@@ -1,0 +1,17 @@
+# Exports:
+export(murmur)
+
+
+# Imports:
+importFrom(lme4, "lmer")
+importFrom(lme4, "fixef")
+importFrom(lme4, "ranef")
+importFrom(lme4, "VarCorr")
+importFrom(lme4, "lmerControl")
+importFrom(arm, "se.fixef")
+importFrom(qgraph, "qgraph")
+import(dplyr)
+importFrom(mvtnorm,"rmvnorm")
+importFrom(clusterGeneration,"genPositiveDefMat")
+import(qgraph)
+import(R2jags)
