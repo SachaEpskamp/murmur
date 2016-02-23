@@ -1,5 +1,6 @@
 # Exports:
 export(murmur)
+export(mlVARsim)
 
 
 # Imports:
