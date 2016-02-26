@@ -60,7 +60,7 @@ lmer_murmur <- function(Y,X,ID,data,orthogonal = FALSE, verbose=TRUE,...){
 
   Results$Sigma_randomEffects <-  matrix(NA, nY * (nX+1), nY * (nX + 1))
   
-  Res1$beta0_SD <- rep(NA,nY)
+  Results$beta0_SD <- rep(NA,nY)
   Results$Beta_SD <- matrix(NA, nY, nX)
   
   # Populate matrices:
@@ -86,7 +86,7 @@ lmer_murmur <- function(Y,X,ID,data,orthogonal = FALSE, verbose=TRUE,...){
     # Vector of relevant random effects:
     Results$Sigma_randomEffects[ (i-1) * (nX+1) + (1:(nX+1)) , (i-1) * (nX+1) + (1:(nX+1)) ] <- mat
     
-    Res1$beta0_SD[i] <- sqrt(diag(mat)[1])
+    Results$beta0_SD[i] <- sqrt(diag(mat)[1])
     Results$Beta_SD[i,] <- sqrt(diag(mat)[-1])
   }
   
