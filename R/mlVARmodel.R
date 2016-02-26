@@ -12,7 +12,7 @@ mlVARsim <- function(
   propPositive = 0.5, # Proportion of positive edges excluding diagonal
   diagPositive = TRUE, # Set diagonal to positive (fixed effects)
   diagIncluded = TRUE, # Include diag no matter what
-  sdRange = c(0.05,0.1), # Range of SD
+  sdRange = c(0.01,0.2), # Range of SD
   shrinkFactor = 0.95,
   residualStyle = c("full","diag"),
   residualShared = TRUE, # Shared is residual matrix for all, unique is residual matrix for each person.
@@ -43,17 +43,21 @@ mlVARsim <- function(
     runif(nPar,sdRange[1],sdRange[2])
   
   # Generate the correlation matrix of non-zero parameters:
-  parCor <- cov2cor(genPositiveDefMat(sum(Pars$included))$Sigma)
+  parCor <- cov2cor(genPositiveDefMat(sum(Pars$included), covMethod = "onion")$Sigma)
   
   ### Generate Betas
   repeat{
     D <- diag(Pars$SD[Pars$included])
     parCov <- D %*% parCor %*% D
     # Generate nPerson beta's:
-    Betas <- lapply(seq_len(nPerson),function(x){
+    RandomEffects <- lapply(seq_len(nPerson),function(x){
       Beta <- matrix(0,nNode,nNode)
-      Beta[Pars$included] <- rmvnorm(1,Pars$fixed[Pars$included],parCov)
-      return(t(Beta))
+      Beta[Pars$included] <- rmvnorm(1,rep(0,sum(Pars$included)),parCov)
+      return(Beta)
+    })
+    Betas <- lapply(RandomEffects,function(x){
+     xx <- x + Pars$fixed[Pars$included]
+      return(xx)
     })
     
     # Test if eigenvalues are in unit circle:
@@ -76,7 +80,7 @@ mlVARsim <- function(
   if (residualShared){
     residSDs <- diag(runif(nNode,residualSDrange[1],residualSDrange[2]))
     if (residualStyle == "full"){
-      residCor <- cov2cor(genPositiveDefMat(nNode)$Sigma)
+      residCor <- cov2cor(genPositiveDefMat(nNode, covMethod = "onion")$Sigma)
       Resids <- lapply(seq_len(nPerson),function(x)residSDs %*% residCor %*% residSDs)
     } else {
       Resids <- lapply(seq_len(nPerson),function(x)residSDs)
@@ -85,7 +89,7 @@ mlVARsim <- function(
     Resids <- lapply(seq_len(nPerson),function(x){
       residSDs <- diag(runif(nNode,residualSDrange[1],residualSDrange[2]))
       if (residualStyle == "full"){
-        residCor <- cov2cor(genPositiveDefMat(nNode)$Sigma)
+        residCor <- cov2cor(genPositiveDefMat(nNode, covMethod = "onion")$Sigma)
         residSDs <- residSDs %*% residCor %*% residSDs
       }
       return(residSDs)
@@ -98,12 +102,18 @@ mlVARsim <- function(
     Data$ID <- i
     return(Data)
   }))
+  
+  fullCov <- matrix(0,nrow(Pars),nrow(Pars))
+  fullCov[Pars$included,Pars$included] <- parCov
 
   Res <- list(
     parameters = Pars,
-    randomEffects = Betas,
+    fixedEffects = matrix(Pars$fixed, nNode, nNode),
+    randomEffects = RandomEffects,
+    randomEffectsSD = matrix(Pars$SD, nNode, nNode),
+    Betas = Betas,
     residuals = Resids,
-    parameterCovariances = parCov, # Only of nonzero ones
+    parameterCovariances = fullCov, # Only of nonzero ones
     Data = Data,
     idvar = "ID",
     vars = paste0("V",seq_len(nNode))

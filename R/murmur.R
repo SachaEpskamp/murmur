@@ -17,14 +17,21 @@ murmur <- function(
   X, # Data frame containing predictors. IF MISSING, DO VAR
   ID, # Vector with IDs
   time,
-  method = c("Bayes_full","Bayes_uni","Bayes_orth","lmer_uni","lmer_orth"), # method to use, see above
-  standardization = c("within","grand","none"), # What standardization to use?
+  method = c("Bayes_full","Bayes_seq","Bayes_orth","lmer_seq","lmer_orth",
+             "lmmlasso_seq","lmmlasso_orth"), # method to use, see above
+  standardization = c("grand","within","none"), # What standardization to use?
   data, # If X, Y and ID are character strings, use this data frame.
-  ...
-){
+  verbose = TRUE,
+  prior = c("lmer_orth","identity","lmer_seq"),
+  control = murmurControl()
+  ){
   # Argument checks:
   method <- match.arg(method)
   standardization <- match.arg(standardization)
+
+  if (!is(control,"murmurControl")){
+    stop("Please use murmurControl() for the 'control' argument.")
+  }
   
   # If data argument is used, extract relevant columns:
   if (missing(data)){
@@ -123,7 +130,19 @@ murmur <- function(
   
   #### ESTIMATION ####
   if (method == "Bayes_full"){
-    Results <- Bayes_full(Y,X,ID,data,...)
+    Results <- do.call(Bayes_murmur,c(list(Y,X,ID,data,verbose, type = "full",prior=prior),control[["jags"]]))
+  } else if (method == "Bayes_seq"){
+    Results <- do.call(Bayes_murmur,c(list(Y,X,ID,data,verbose, type = "sequential",prior=prior),control[["jags"]]))
+  } else  if (method == "Bayes_orth"){
+    Results <- do.call(Bayes_murmur,c(list(Y,X,ID,data,verbose, type = "orthogonal",prior=prior),control[["jags"]]))
+  } else if (method == "lmer_seq"){
+    Results <- do.call(lmer_murmur,c(list(Y,X,ID,data,verbose,orthogonal=FALSE),control[["lmer"]]))
+  } else if (method == "lmer_orth"){
+    Results <- do.call(lmer_murmur,c(list(Y,X,ID,data,verbose,orthogonal=TRUE),control[["lmer"]]))
+  } else if (method == "lmmlasso_seq"){
+    Results <- do.call(lmmlasso_murmur,c(list(Y,X,ID,data,verbose,orthogonal=FALSE),control[["lmmlasso"]]))
+  }  else if (method == "lmmlasso_orth"){
+    Results <- do.call(lmmlasso_murmur,c(list(Y,X,ID,data,verbose,orthogonal=TRUE),control[["lmmlasso"]]))
   } else {
     stop(paste0("Method '",method,"' not yet implemented."))
   }
