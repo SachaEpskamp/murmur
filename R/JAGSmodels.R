@@ -168,3 +168,71 @@ JAGSModel_Bayes_full <- function(){
                          (Beta_fixed[1:nY,1:nX] +  Beta_randomEffects[1:nY,1:nX,id[t]]) %*% X[t,1:nX], Tau_error[1:nY,1:nY])
   }
 }
+
+
+
+### JAGS MODEL ###
+JAGSModel_Bayes_factor <- function(){
+  # Y
+  # X
+  # nX = number of X variables
+  # nY = number of Y variables
+  # nT = number of time points
+  # id = id vector
+  # nP = number of persons
+  # nFactor = number of factors
+  # nRandom = number of randoms (nX+1)*nY
+  
+  ### Identity matrices:
+  ### Priors: ###
+  
+  ## Fixed effects:
+  for (i in 1:nY){
+    beta0_fixed[i] ~ dnorm(0,0.001)
+    for (j in 1:nX){
+      Beta_fixed[i,j] ~ dnorm(0,0.001)
+    }
+  }
+  
+  ## Random effects:
+  # Vector of random effects
+  # Tau_randomEffects[1:((nX+1)*nY),1:((nX+1)*nY)] ~ dwish(R_Tau_randomEffects, ((nX+1)*nY)) 
+  # Sigma_randomEffects[1:((nX+1)*nY),1:((nX+1)*nY)] <- inverse(Tau_randomEffects)  
+  
+  # Random effect errors:
+  for (r in 1:nRandom){
+    FactorErrorVariances[r] ~ dgamma(0.1,0.1)
+    for (f in 1:nFactor){
+      FactorLambda[r,f] ~ dnorm(0,0.001)
+    }
+  }
+  
+  # General error structure:
+  Tau_error[1:nY,1:nY] ~ dwish(R_Tau_error[1:nY,1:nY], nY)
+  Sigma_error[1:nY,1:nY] <- inverse(Tau_error[1:nY,1:nY])
+  
+  for (p in 1:nP){
+    # Randoms[1:((nX+1)*nY),p] ~ dmnorm(randMean, Tau_randomEffects)
+    for (f in 1:nFactor){
+      Eta[p,f] ~ dnorm(0,0.001)
+    }
+    for (r in 1:nRandom){
+      Epsilon[r,p] ~ dnorm(0,FactorErrorVariances[r])
+      Randoms[r,p] <- FactorLambda[r,] %*% Eta[p,] + Epsilon[r,p]
+    }
+    
+    for (i in 1:nY){
+      beta0_randomEffects[i,p] <- Randoms[(i-1)*(nX+1)+1,p]
+      for (j in 1:nX){
+        Beta_randomEffects[i,j,p]  <- Randoms[(i-1)*(nX+1)+1+j,p]
+      }
+    }
+  }
+  
+  # likelihood:
+  for (t in 1:nT){
+    Y[t,1:nY] ~ dmnorm(beta0_fixed[1:nY] + beta0_randomEffects[1:nY,id[t]] + 
+                         (Beta_fixed[1:nY,1:nX] +  Beta_randomEffects[1:nY,1:nX,id[t]]) %*% X[t,1:nX], Tau_error[1:nY,1:nY])
+  }
+}
+

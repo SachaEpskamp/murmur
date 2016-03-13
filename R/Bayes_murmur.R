@@ -1,8 +1,10 @@
 
 Bayes_murmur <- function(Y,X,ID,data,verbose=TRUE,prior = c("lmer_orth","identity","lmer_seq"),
-                       type = c("full","sequential","orthogonal"),...){
+                       type = c("full","sequential","orthogonal","factor"),nFactor=1,...){
   prior <- match.arg(prior)
-
+  type <= match.arg(type)
+  if (type == "factor") prior <- "identity"
+  
   # Random effects prior:
   if (prior == "identity"){
 
@@ -45,7 +47,9 @@ Bayes_murmur <- function(Y,X,ID,data,verbose=TRUE,prior = c("lmer_orth","identit
       R_Tau_error = diag(ncol(Y)),
       R_Tau_randomEffects = REprior,
       # nRandom = ncol(Y) + ncol(Y) * ncol(X),
-      randMean = rep(0, ncol(Y) + ncol(Y) * ncol(X))
+      randMean = rep(0, ncol(Y) + ncol(Y) * ncol(X)),
+      nFactor = nFactor,
+      nRandom = (ncol(X)+1)*ncol(Y)
     )
   
     ### RUN JAGS ###
@@ -62,6 +66,7 @@ Bayes_murmur <- function(Y,X,ID,data,verbose=TRUE,prior = c("lmer_orth","identit
                                 full = JAGSModel_Bayes_full,
                                 sequential = JAGSModel_Bayes_seq,
                                 orthogonal = JAGSModel_Bayes_orth,
+                                factor = JAGSModel_Bayes_factor,
                                 ),...)
     
     Results <- list(output = samples)
@@ -85,6 +90,10 @@ Bayes_murmur <- function(Y,X,ID,data,verbose=TRUE,prior = c("lmer_orth","identit
     Results$Sigma_error <-  samples$BUGSoutput$sims.list$Sigma_error %>% 
       apply(2:3, mean)
 
+    if (type == "factor"){
+      return(Results)
+    }
+    
     if (type == "full"){
       
       Results$Sigma_randomEffects <-  samples$BUGSoutput$sims.list$Sigma_randomEffects %>% 

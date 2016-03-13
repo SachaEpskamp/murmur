@@ -18,12 +18,13 @@ murmur <- function(
   ID, # Vector with IDs
   time,
   method = c("Bayes_full","Bayes_seq","Bayes_orth","lmer_seq","lmer_orth",
-             "lmmlasso_seq","lmmlasso_orth"), # method to use, see above
+             "lmmlasso_seq","lmmlasso_orth","Bayes_factor"), # method to use, see above
   standardization = c("grand","within","none"), # What standardization to use?
   data, # If X, Y and ID are character strings, use this data frame.
   verbose = TRUE,
   prior = c("lmer_orth","identity","lmer_seq"),
-  control = murmurControl()
+  control = murmurControl(),
+  nFactor=1
   ){
   # Argument checks:
   method <- match.arg(method)
@@ -133,6 +134,8 @@ murmur <- function(
     Results <- do.call(Bayes_murmur,c(list(Y,X,ID,data,verbose, type = "full",prior=prior),control[["jags"]]))
   } else if (method == "Bayes_seq"){
     Results <- do.call(Bayes_murmur,c(list(Y,X,ID,data,verbose, type = "sequential",prior=prior),control[["jags"]]))
+  }  else if (method == "Bayes_factor"){
+    Results <- do.call(Bayes_murmur,c(list(Y,X,ID,data,verbose, type = "factor",prior=prior,nFactor=nFactor),control[["jags"]]))
   } else  if (method == "Bayes_orth"){
     Results <- do.call(Bayes_murmur,c(list(Y,X,ID,data,verbose, type = "orthogonal",prior=prior),control[["jags"]]))
   } else if (method == "lmer_seq"){
